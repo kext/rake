@@ -20,7 +20,7 @@ C.library 'somelibrary', [
 # Set some other compiler flags.
 C.cflags = '-O3 -std=c99 -Wall -pedantic'
 
-# Make ‘build/libtest.a’ from ‘src/test/libtest.a’.
+# Make ‘build/libtest.a’ from ‘src/test/test.c’.
 C.library 'test', ['test.c']
 
 # Create a program ‘build/test’.
