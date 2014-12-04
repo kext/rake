@@ -30,7 +30,7 @@ class C
     objects = Array.new
     files.each do |f|
       type = /\.[a-zA-Z0-9]+$/.match(f).to_s
-      if type == '.c' then
+      if type == '.c' || type == '.cc' || type == '.cpp' then
         o = f.ext('.o')
         theobject = "#{@@builddir}/objects/#{name}/#{o}"
         thesource = "#{@@sourcedir}/#{name}/#{f}"
@@ -59,7 +59,7 @@ class C
     objects = Array.new
     files.each do |f|
       type = /\.[a-zA-Z0-9]+$/.match(f).to_s
-      if type == '.c' then
+      if type == '.c' || type == '.cc' || type == '.cpp' then
         o = f.ext('.o')
         theobject = "#{@@builddir}/objects/#{o}"
         thesource = "#{@@sourcedir}/#{f}"
