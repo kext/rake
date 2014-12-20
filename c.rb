@@ -8,7 +8,9 @@ class C
   @@libs = ''
 
   def C.run cmd
-    raise "Error: '#{cmd}'" unless system cmd
+    r = `#{cmd}`
+    raise "Error: '#{cmd}'" unless $?.success?
+    return r
   end
 
   def C.clean
@@ -32,20 +34,30 @@ class C
       type = /\.[a-zA-Z0-9]+$/.match(f).to_s
       if type == '.c' || type == '.cc' || type == '.cpp' then
         o = f.ext('.o')
+        d = f.ext('.deps.rb')
         theobject = "#{@@builddir}/objects/#{name}/#{o}"
+        thedeps = "#{@@builddir}/objects/#{name}/#{d}"
         thesource = "#{@@sourcedir}/#{name}/#{f}"
         objects.push theobject
-        Rake::Task.define_task theobject => [thesource] do
+        Rake::FileTask.define_task theobject => [thesource] do
           puts "[CC] #{theobject}"
           run "mkdir -p \"#{@@builddir}/objects/#{name}\""
+          xxx = run "#{@@compiler} #{cflags}#{@@libs} -M \"#{thesource}\""
+          xx = []
+          File.open(thedeps, 'w') do |f|
+            f.puts '# This file was automatically generated. Do not edit!'
+            xxx.scan(/\s([^\s\\]+)/) do |x| xx.push x[0] end
+            f.puts "Rake::FileTask.define_task #{theobject.dump} => #{xx}"
+          end
           run "#{@@compiler} #{cflags}#{@@libs} -c -o \"#{theobject}\" \"#{thesource}\""
         end
-        Rake::Task.define_task thelib => [theobject]
+        load thedeps if File.file? thedeps
+        Rake::FileTask.define_task thelib => [theobject]
       else
         objects.push f
       end
     end
-    Rake::Task.define_task thelib do
+    Rake::FileTask.define_task thelib do
       puts "[AR] #{thelib}"
       run "ar rcs \"#{thelib}\" \"#{objects.join '" "'}\""
     end
@@ -61,24 +73,34 @@ class C
       type = /\.[a-zA-Z0-9]+$/.match(f).to_s
       if type == '.c' || type == '.cc' || type == '.cpp' then
         o = f.ext('.o')
+        d = f.ext('.deps.rb')
         theobject = "#{@@builddir}/objects/#{o}"
+        thedeps = "#{@@builddir}/objects/#{d}"
         thesource = "#{@@sourcedir}/#{f}"
         objects.push theobject
-        Rake::Task.define_task theobject => [thesource] do
+        Rake::FileTask.define_task theobject => [thesource] do
           puts "[CC] #{theobject}"
           run "mkdir -p \"#{@@builddir}/objects\""
+          xxx = run "#{@@compiler} #{cflags}#{@@libs} -M \"#{thesource}\""
+          xx = []
+          File.open(thedeps, 'w') do |f|
+            f.puts '# This file was automatically generated. Do not edit!'
+            xxx.scan(/\s([^\s\\]+)/) do |x| xx.push x[0] end
+            f.puts "Rake::FileTask.define_task #{theobject.dump} => #{xx}"
+          end
           run "#{@@compiler} #{cflags}#{@@libs} -c -o \"#{theobject}\" \"#{thesource}\""
         end
-        Rake::Task.define_task theprogram => [theobject]
+        load thedeps if File.file? thedeps
+        Rake::FileTask.define_task theprogram => [theobject]
       elsif type == '.a' then
         thefile = "#{@@builddir}/#{f}"
-        Rake::Task.define_task theprogram => [thefile]
+        Rake::FileTask.define_task theprogram => [thefile]
         objects.push thefile
       else
         objects.push f
       end
     end
-    Rake::Task.define_task theprogram do
+    Rake::FileTask.define_task theprogram do
       puts "[LD] #{theprogram}"
       run "#{@@compiler} \"-L#{@@builddir}\" -o \"#{theprogram}\" \"#{objects.join '" "'}\""
     end
