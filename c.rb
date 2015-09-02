@@ -2,7 +2,9 @@ require 'rake'
 
 class C
   @@cflags = '-Wall'
+  @@ldflags = ''
   @@compiler = ENV['CC'] || 'cc'
+  @@ar = ENV['AR'] || 'ar'
   @@builddir = 'build'
   @@sourcedir = 'src'
   @@libs = ''
@@ -17,12 +19,36 @@ class C
     run "rm -rf \"#{@@builddir}\""
   end
 
+  def C.cc
+    @@compiler
+  end
+
+  def C.cc= cc
+    @@compiler = cc
+  end
+
+  def C.ar
+    @@ar
+  end
+
+  def C.ar= ar
+    @@ar = ar
+  end
+
   def C.cflags
     @@cflags
   end
 
   def C.cflags= flags
     @@cflags = flags
+  end
+
+  def C.ldflags
+    @@ldflags
+  end
+
+  def C.ldflags= flags
+    @@ldflags = flags
   end
 
   def C.library name, files
@@ -59,7 +85,7 @@ class C
     end
     Rake::FileTask.define_task thelib do
       puts "[AR] #{thelib}"
-      run "ar rcs \"#{thelib}\" \"#{objects.join '" "'}\""
+      run "#{@@ar} rcs \"#{thelib}\" \"#{objects.join '" "'}\""
     end
     Rake::Task.define_task :default => thelib
     Rake::Task.define_task :clean => :c_clean
@@ -102,7 +128,7 @@ class C
     end
     Rake::FileTask.define_task theprogram do
       puts "[LD] #{theprogram}"
-      run "#{@@compiler} \"-L#{@@builddir}\" -o \"#{theprogram}\" \"#{objects.join '" "'}\""
+      run "#{@@compiler} #{@@ldflags} \"-L#{@@builddir}\" -o \"#{theprogram}\" \"#{objects.join '" "'}\""
     end
     Rake::Task.define_task :default => theprogram
     Rake::Task.define_task :clean => :c_clean
